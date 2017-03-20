@@ -1,0 +1,18 @@
+/*
+ * (C) Copyright 2017 Embedtronics Oy
+ *
+ * SPDX-License-Identifier:     GPL-2.0+ X11
+ */
+
+/dts-v1/;
+#include "rk3288-mcu3288-1g.dtsi"
+#include "rk3288-mpcsa4-mcu3288.dtsi"
+
+/ {
+	model = "Embedtronics MPCSA4/MCU3288-1G";
+	compatible = "embedtronics,mpcsa4-mcu3288-1g", "embedtronics,mpcsa4-mcu3288", "embedtronics,mcu3288-1g", "embedtronics,mcu3288", "rockchip,rk3288";
+
+	chosen {
+		stdout-path = &uart2;
+	};
+};

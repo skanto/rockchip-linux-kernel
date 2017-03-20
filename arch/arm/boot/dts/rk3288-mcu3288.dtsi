@@ -1,0 +1,365 @@
+/*
+ *  (C) Copyright 2017 Embedtronics Oy
+ *
+ * SPDX-License-Identifier:	GPL-2.0+ X11
+ */
+
+#include "rk3288.dtsi"
+
+/ {
+	compatible = "embedtronics,mcu3288", "rockchip,rk3288";
+
+	/*memory {
+		reg = <0x0 0x40000000>;
+		device_type = "memory";
+	};*/
+
+	emmc_pwrseq: emmc-pwrseq {
+		compatible = "mmc-pwrseq-emmc";
+		pinctrl-0 = <&emmc_reset>;
+		pinctrl-names = "default";
+		reset-gpios = <&gpio3 9 GPIO_ACTIVE_LOW>;
+	};
+
+	spdif_out: spdif-out {
+		compatible = "linux,spdif-out";
+		#sound-dai-cells = <0>;
+	};
+
+	vcc_sys: vsys-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc_sys";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	vcc_3v3_vbus: v3v3-vbus-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc_3v3_vbus";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	vcc_flash: emmc-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc_flash";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		vin-supply = <&vcc_io>;
+		regulator-always-on;
+		regulator-boot-on;
+		startup-delay-us = <100000>;
+	};
+
+	vcc_hsic: hsic-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc_hsic";
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		vin-supply = <&vcc_io>;
+		regulator-always-on;
+		regulator-boot-on;
+		startup-delay-us = <100000>;
+	};
+
+};
+
+&cpu0 {
+	cpu0-supply = <&vdd_cpu>;
+};
+
+&emmc {
+	bus-width = <8>;
+	cap-mmc-highspeed;
+	disable-wp;
+	non-removable;
+	num-slots = <1>;
+	mmc-pwrseq = <&emmc_pwrseq>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&emmc_clk>, <&emmc_cmd>, <&emmc_pwr>, <&emmc_bus8>;
+	vmmc-supply = <&vcc_io>;
+	vqmcc-supply = <&vcc_flash>;
+	status = "okay";
+};
+
+&sdmmc {
+	bus-width = <4>;
+	cap-mmc-highspeed;
+	/*sd-uhs-sdr12;
+	sd-uhs-sdr25;
+	sd-uhs-sdr50;
+	sd-uhs-sdr104;*/
+	cap-sd-highspeed;
+	card-detect-delay = <200>;
+	disable-wp;
+	num-slots = <1>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdmmc_clk>, <&sdmmc_cmd>, <&sdmmc_cd>, <&sdmmc_bus4>;
+	supports-sd;
+	vmmc-supply = <&vcc_io>;
+	vqmmc-supply = <&vccio_sd>;
+	status = "okay";
+};
+
+&i2c0 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	vdd_cpu: syr827@40 {
+		compatible = "silergy,syr827";
+		fcs,suspend-voltage-selector = <1>;
+		reg = <0x40>;
+		regulator-name = "vdd_cpu";
+		regulator-min-microvolt = <850000>;
+		regulator-max-microvolt = <1350000>;
+		regulator-always-on;
+		regulator-boot-on;
+		regulator-enable-ramp-delay = <300>;
+		regulator-ramp-delay = <8000>;
+		vin-supply = <&vcc_3v3_vbus>;
+	};
+
+	vdd_gpu: syr828@41 {
+		compatible = "silergy,syr828";
+		fcs,suspend-voltage-selector = <1>;
+		reg = <0x41>;
+		regulator-name = "vdd_gpu";
+		regulator-min-microvolt = <850000>;
+		regulator-max-microvolt = <1350000>;
+		regulator-always-on;
+		vin-supply = <&vcc_3v3_vbus>;
+		regulator-enable-ramp-delay = <300>;
+		regulator-ramp-delay = <8000>;
+	};
+
+	act8846: act8846@5a {
+		compatible = "active-semi,act8846";
+		reg = <0x5a>;
+		system-power-controller;
+
+		inl1-supply = <&vcc_3v3_vbus>;
+		inl2-supply = <&vcc_sys>;
+		inl3-supply = <&vcc_20>;
+		vp1-supply = <&vcc_3v3_vbus>;
+		vp2-supply = <&vcc_sys>;
+		vp3-supply = <&vcc_3v3_vbus>;
+		vp4-supply = <&vcc_3v3_vbus>;
+
+		interrupts-parent = <&gpio0>;
+		interrupts = <4 IRQ_TYPE_EDGE_FALLING>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pmic_int>;
+
+		regulators {
+			vcc_ddr: REG1 {
+				regulator-name = "VCC_DDR";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+				/*regulator-max-microvolt = <1500000>;*/
+				regulator-always-on;
+			};
+
+			vcc_io: REG2 {
+				regulator-name = "VCC_IO";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vdd_log: REG3 {
+				regulator-name = "VDD_LOG";
+				regulator-min-microvolt = <1100000>;
+				regulator-max-microvolt = <1100000>;
+				regulator-always-on;
+			};
+
+			vcc_20: REG4 {
+				regulator-name = "VCC_20";
+				regulator-min-microvolt = <2000000>;
+				regulator-max-microvolt = <2000000>;
+				regulator-always-on;
+			};
+
+			vccio_sd: REG5 {
+				regulator-name = "VCCIO_SD";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+				/*regulator-boot-on;*/
+			};
+
+			vdd10_lcd: REG6 {
+				regulator-name = "VDD10_LCD";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				/*regulator-boot-off;*/
+			};
+
+			vcca_18: REG7 {
+				regulator-name = "VCCA_18";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+				/*regulator-boot-on;*/
+			};
+
+			vcca_33: REG8 {
+				regulator-name = "VCCA_33";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+				/*regulator-boot-off;*/
+			};
+
+			/*vccio_pmu: REG9 {
+				regulator-name = "VCCIO_PMU";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};*/
+
+			vdd_10: REG10 {
+				regulator-name = "VDD_10";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			vcc_18: REG11 {
+				regulator-name = "VCC_18";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			vcc18_lcd: REG12 {
+				regulator-name = "VCC18_LCD";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+				/*regulator-boot-off;*/
+			};
+		};
+	};
+};
+
+&i2c3 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	cat1023: 24c02@50 {
+		status = "okay";
+	};
+};
+
+&pinctrl {
+	pcfg_output_high: pcfg-output-high {
+		output-high;
+	};
+	
+	pcfg_output_low: pcfg-output-low {
+		output-low;
+	};
+
+	emmc {
+		emmc_reset: emmc-reset {
+			rockchip,pins = <3 9 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+	
+	pmic {
+		pmic_int: pmic-int {
+			rockchip,pins = <0 4 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	reset {
+		sw_reset: sw-reset {
+			rockchip,pins = <5 18 RK_FUNC_GPIO &pcfg_output_high>;
+		};
+
+		sw_reset_2: sw-reset-2 {
+			rockchip,pins = <5 19 RK_FUNC_GPIO &pcfg_output_high>;
+		};
+	};
+};
+
+&spi1 {
+	u-boot,dm-pre-reloc;
+	pinctrl-names ="default";
+	pinctrl-0 = <&spi1_clk>, <&spi1_tx>, <&spi1_rx>, <&spi1_cs0>;
+	status = "okay";
+
+	mtd_dataflash@0 {
+		compatible = "atmel,at45", "atmel,dataflash";
+		spi-max-frequency = <15000000>;
+		reg = <0>;
+	};
+};
+
+&vopb {
+	status = "okay";
+};
+
+&vopb_mmu {
+	status = "okay";
+};
+
+&vopl {
+	status = "okay";
+};
+
+&vopl_mmu {
+	status = "okay";
+};
+
+&wdt {
+	status = "okay";
+};
+
+&tsadc {
+	rockchip,hw-tshut-mode = <0>;	/* tshut mode 0:CRU 1:GPIO */
+	rockchip,hw-tshut-polarity = <0>; /* tshut polarity 0:LOW 1:HIGH */
+	status = "okay";
+};
+
+&saradc {
+	vref-supply = <&vcc_18>;
+	status = "disabled";
+};
+
+&io_domains {
+    audio-supply = <&vcc_io>;
+    bb-supply = <&vcc_io>;
+    dvp-supply = <&vcc_io>;
+    flash0-supply = <&vcc_flash>;
+    flash1-supply = <&vcc_flash>;
+    gpio30-supply = <&vcc_io>;
+    gpio1830-supply = <&vcc_io>;
+    lcdc-supply = <&vcc_io>;
+    sdcard-supply = <&vcc_io>;
+    wifi-supply = <&vcc_io>;
+
+	status = "okay";
+};
+
+&dmc {
+	rockchip,pctl-timing = <0x29a 0xc8 0x1f8 0x42 0x4e 0x4 0xea 0xa
+		0x5 0x0 0xa 0x7 0x19 0x24 0xa 0x7
+		0x5 0xa 0x5 0x200 0x5 0x10 0x40 0x0
+		0x1 0x7 0x7 0x4 0xc 0x43 0x100 0x0
+		0x5 0x0>;
+	rockchip,phy-timing = <0x48f9aab4 0xea0910 0x1002c200
+		0xa60 0x40 0x10 0x0>;
+	rockchip,sdram-params = <0x30B25564 0x627 3 666000000 3 9 1>;
+};
+

@@ -1,0 +1,16 @@
+/*
+ *  (C) Copyright 2017 Embedtronics Oy
+ *
+ * SPDX-License-Identifier:	GPL-2.0+ X11
+ */
+
+#include "rk3288-mcu3288.dtsi"
+
+/ {
+	compatible = "embedtronics,mcu3288-4g", "embedtronics,mcu3288", "rockchip,rk3288";
+
+	memory {
+		reg = <0x0 0xf0000000>;
+		device_type = "memory";
+	};
+};
